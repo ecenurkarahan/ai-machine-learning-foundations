@@ -43,18 +43,17 @@ def dataset_analysis():
     sns.histplot(dataset["inm_price"], bins=50, kde=True)
     plt.title("Distribution of Property Prices")
     plt.show()
+    # correlation matrix but I excluded barrio and district bc they need to be mapped
+    plt.figure(figsize=(12, 8))
+    corr = dataset.select_dtypes(include=["number"]).corr()
+    sns.heatmap(corr, annot=False, cmap="coolwarm")
+    plt.title("Correlation Heatmap")
+    plt.show()
 
     # relationship between apartment size and price
     plt.figure(figsize=(8, 5))
     sns.scatterplot(x="inm_size", y="inm_price", data=dataset)
     plt.title("Property Size vs Price")
-    plt.show()
-
-    # correlation matrix but I excluded barrio and district bc they need to be mapped
-    plt.figure(figsize=(24, 16))
-    corr = dataset.select_dtypes(include=["number"]).corr()
-    sns.heatmap(corr, annot=False, cmap="coolwarm")
-    plt.title("Correlation Heatmap")
     plt.show()
 
     # average price per district, I used this during integer mapping
@@ -66,6 +65,8 @@ def dataset_analysis():
     plt.title("Average Price by District")
     plt.ylabel("Average Price")
     plt.show()
+
+
 """
 Outcomes that I obtained from dataset analysis:
 From correlation table: Size (inm_size), historical price(his_price) and proportion of university graduates or students (dem_PropConEstudiosUniversitarios)
@@ -77,8 +78,10 @@ I decided to map the districts and barrios to integers based on their average pr
 From property size vs price graph: property size is positively related with price which was seen from correlation graph too.
 From property price distribution graph: I saw that most of the properties have low price, the distribution is not like a normal distribution, its skewed.
 """
+
+
 def apply_linear_regression():
-    dataset = pd.read_csv("session_7_dataset.csv")  # adjust filename if needed
+    dataset = pd.read_csv("session_7_dataset.csv")
     # unnamed is dropped bcause it is just an index column
     dataset = dataset.drop(columns=["Unnamed: 0"], errors="ignore")
     # I decided to map the districts to numbers, the most expensive district would be the highest number
@@ -125,7 +128,7 @@ def apply_linear_regression():
     print("-----------------")
     print(f"Residual Standard Error (RSE): {rse:,.2f}")
     print(f"R² Score: {r2:.4f}")
-    #plotting the predicted vs actual prices
+    # plotting the predicted vs actual prices
     plt.figure(figsize=(6, 6))
     plt.scatter(y_test, y_pred, alpha=0.5, s=10)
     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color="red", lw=2)
@@ -133,6 +136,7 @@ def apply_linear_regression():
     plt.ylabel("Predicted Prices")
     plt.title("Predicted vs Actual Property Prices")
     plt.show()
+
 
 # 2: Analyze data and redefine the problem to create a classification one
 # Algorithms that should be used: Perceptron learning, Logistic regression, Generative models (LDA, QDA), KNN
@@ -145,10 +149,11 @@ def apply_classification_models():
     barrio_ranks = dataset.groupby("inm_barrio")["inm_price"].mean().rank(ascending=True).astype(int)
     dataset["inm_barrio_encoded"] = dataset["inm_barrio"].map(barrio_ranks).fillna(0)
     # Here, I classified the prices into 3 classes: low, medium, high
-    # and I used mean and standard deviation to define the classes
+    """
+    # and I used mean and standard deviation to define the classes, but it didnt give good results so I abandoned it
     mean_price = dataset['inm_price'].mean()
     std_price = dataset['inm_price'].std()
-    """def price_to_class(price):
+    def price_to_class(price):
         if price < mean_price - std_price:
             return 0  # Low
         elif price > mean_price + std_price:
@@ -158,7 +163,7 @@ def apply_classification_models():
     # creating the price class column
     dataset['price_class'] = dataset['inm_price'].apply(price_to_class)"""
     dataset['price_class'] = pd.qcut(dataset['inm_price'], q=3, labels=[0, 1, 2])
-    # Optional: check class distribution
+    # checking class distribution
     print("Class distribution:")
     print(dataset['price_class'].value_counts())
     # previously selected features
@@ -176,7 +181,7 @@ def apply_classification_models():
     y = dataset['price_class']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # 6. Train and evaluate models
+    # importing all the models that we need
     models = {
         "Perceptron": Perceptron(),
         "Logistic Regression": LogisticRegression(max_iter=1000),
@@ -193,35 +198,22 @@ def apply_classification_models():
         print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
         print("Classification Report:\n", classification_report(y_test, y_pred))
 
-    # 7. Optional: visualize predicted vs actual classes (scatter)
-    plt.figure(figsize=(8, 6))
-    plt.scatter(range(len(y_test)), y_test, label='Actual', alpha=0.6)
-    plt.scatter(range(len(y_test)), y_pred, label='Predicted', alpha=0.6)
-    plt.xlabel("Test sample index")
-    plt.ylabel("Price class (0=Low,1=Medium,2=High)")
-    plt.title("Actual vs Predicted Price Classes")
-    plt.legend()
-    plt.show()
+
 # 3: Apply other methods (make research for this) and compare their results
 def apply_other_classifications():
-    # 1. Load dataset
     dataset = pd.read_csv("session_7_dataset.csv")
     dataset = dataset.drop(columns=["Unnamed: 0"], errors="ignore")
-
-    # 2. Encode district and barrio based on rank
+    # previously defined district and barrio encoding
     district_ranks = dataset.groupby("inm_distrito")["inm_price"].mean().rank(ascending=True).astype(int)
     dataset["inm_distrito_encoded"] = dataset["inm_distrito"].map(district_ranks).fillna(0)
     barrio_ranks = dataset.groupby("inm_barrio")["inm_price"].mean().rank(ascending=True).astype(int)
     dataset["inm_barrio_encoded"] = dataset["inm_barrio"].map(barrio_ranks).fillna(0)
 
-    # 3. Create price classes using quantiles
+    # same price classification as before
     dataset['price_class'] = pd.qcut(dataset['inm_price'], q=3, labels=[0, 1, 2])
-
-    # Optional: check class distribution
     print("Class distribution:")
     print(dataset['price_class'].value_counts())
-
-    # 4. Select important features
+    # previously selected features
     features = [
         "inm_size",
         "his_price",
@@ -235,10 +227,9 @@ def apply_other_classifications():
     X = dataset[features].fillna(0)
     y = dataset['price_class']
 
-    # 5. Split into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # 6. Train and evaluate models
+    # importing models that I decided to use
+    # I decided to use Decision Tree, Random Forest and SVM because I have heard about them in other courses
     models = {
         "Decision Tree": DecisionTreeClassifier(random_state=42),
         "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42),
@@ -253,19 +244,18 @@ def apply_other_classifications():
         print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
         print("Classification Report:\n", classification_report(y_test, y_pred))
 
-        # Optional: scatter plot for predicted vs actual
-        plt.figure(figsize=(8, 6))
-        plt.scatter(range(len(y_test)), y_test, label='Actual', alpha=0.6)
-        plt.scatter(range(len(y_test)), y_pred, label='Predicted', alpha=0.6)
-        plt.xlabel("Test sample index")
-        plt.ylabel("Price class (0=Low,1=Medium,2=High)")
-        plt.title(f"Actual vs Predicted Price Classes ({name})")
-        plt.legend()
-        plt.show()
 def main():
-    #dataset_analysis()
-    #apply_linear_regression()
-    #apply_classification_models()
+    #part 1
+    print("********************Part 1********************")
+    dataset_analysis()
+    apply_linear_regression()
+    #part 2
+    print("********************Part 2********************")
+    apply_classification_models()
+    #part 3
+    print("********************Part 3********************")
     apply_other_classifications()
+
+
 if __name__ == "__main__":
     main()
