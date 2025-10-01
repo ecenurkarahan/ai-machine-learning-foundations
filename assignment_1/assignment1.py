@@ -18,6 +18,7 @@ from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
@@ -81,6 +82,7 @@ From property price distribution graph: I saw that most of the properties have l
 
 
 def apply_linear_regression():
+    # reading the dataset
     dataset = pd.read_csv("session_7_dataset.csv")
     # unnamed is dropped bcause it is just an index column
     dataset = dataset.drop(columns=["Unnamed: 0"], errors="ignore")
@@ -135,6 +137,69 @@ def apply_linear_regression():
     plt.xlabel("Actual Prices")
     plt.ylabel("Predicted Prices")
     plt.title("Predicted vs Actual Property Prices")
+    plt.show()
+
+
+def apply_polynomial_regression():
+    # loading the data
+    dataset = pd.read_csv("session_7_dataset.csv")
+    # unnamed is dropped bcause it is just an index column
+    dataset = dataset.drop(columns=["Unnamed: 0"], errors="ignore")
+    # I decided to map the districts to numbers, the most expensive district would be the highest number
+    # cheapest = 1, most expensive = N, null ones are 0
+    district_ranks = dataset.groupby("inm_distrito")["inm_price"].mean().rank(ascending=True).astype(int)
+    dataset["inm_distrito_encoded"] = dataset["inm_distrito"].map(district_ranks).fillna(0)
+    # cheapest = 1, most expensive = N, null ones are 0
+    barrio_ranks = dataset.groupby("inm_barrio")["inm_price"].mean().rank(ascending=True).astype(int)
+    dataset["inm_barrio_encoded"] = dataset["inm_barrio"].map(barrio_ranks).fillna(0)
+    # I selected these features based on the dataset analysis that I made earlier
+    selected_features = [
+        "inm_size",
+        "his_price",
+        "dem_PropConEstudiosUniversitarios",
+        "dem_TasaDeParo",
+        "dem_PropSinEstudiosUniversitarios",
+        "dem_PropSinEstudios",
+        "inm_distrito_encoded",
+        "inm_barrio_encoded"
+    ]
+    # feature matrix and target variable
+    X = dataset[selected_features]
+    y = dataset["inm_price"]
+    # filling null values with the mean of the column
+    X = X.fillna(X.mean())
+    # splitting the dataset into test and train, only 20% of the data is used for testing
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # training the model
+    # polynomial feature transformation
+    poly = PolynomialFeatures(degree=3, include_bias=False)
+    X_train_poly = poly.fit_transform(X_train)
+    X_test_poly = poly.transform(X_test)
+    # fitting linear Regression on polynomial features
+    model = LinearRegression()
+    model.fit(X_train_poly, y_train)
+    # predicting
+    y_pred = model.predict(X_test_poly)
+
+    # evaluating with rse and r^2
+    n = len(y_test)
+    p = X_test_poly.shape[1]
+    residuals = y_test - y_pred
+    rse = (sum(residuals ** 2) / (n - p - 1)) ** 0.5
+    r2 = r2_score(y_test, y_pred)
+
+    print("Polynomial Regression Evaluation:")
+    print("--------------------------------")
+    print(f"Degree: 3")
+    print(f"Residual Standard Error (RSE): {rse:,.2f}")
+    print(f"R² Score: {r2:.4f}")
+    # predicted vs actual prices plot
+    plt.figure(figsize=(6, 6))
+    plt.scatter(y_test, y_pred, alpha=0.5, s=10)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], color="red", lw=2)
+    plt.xlabel("Actual Prices")
+    plt.ylabel("Predicted Prices")
+    plt.title(f"Polynomial Regression (degree=3)\nPredicted vs Actual Prices")
     plt.show()
 
 
@@ -244,15 +309,17 @@ def apply_other_classifications():
         print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
         print("Classification Report:\n", classification_report(y_test, y_pred))
 
+
 def main():
-    #part 1
+    # part 1
     print("********************Part 1********************")
     dataset_analysis()
     apply_linear_regression()
-    #part 2
+    apply_polynomial_regression()
+    # part 2
     print("********************Part 2********************")
     apply_classification_models()
-    #part 3
+    # part 3
     print("********************Part 3********************")
     apply_other_classifications()
 
