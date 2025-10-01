@@ -45,10 +45,13 @@ def dataset_analysis():
     plt.title("Distribution of Property Prices")
     plt.show()
     # correlation matrix but I excluded barrio and district bc they need to be mapped
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(16, 12))
     corr = dataset.select_dtypes(include=["number"]).corr()
-    sns.heatmap(corr, annot=False, cmap="coolwarm")
-    plt.title("Correlation Heatmap")
+    sns.heatmap(corr, annot=False, cmap="coolwarm", cbar=True, square=True)
+    plt.title("Correlation Heatmap", fontsize=16)
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    plt.yticks(rotation=0, fontsize=10)
+    plt.tight_layout()
     plt.show()
 
     # relationship between apartment size and price
@@ -58,13 +61,15 @@ def dataset_analysis():
     plt.show()
 
     # average price per district, I used this during integer mapping
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(14, 8))
     avg_price_per_district = dataset.groupby("inm_distrito")["inm_price"].mean().sort_values(ascending=False)
     print("Average property price per district (highest to lowest):\n")
     print(avg_price_per_district)
     avg_price_per_district.plot(kind="bar")
-    plt.title("Average Price by District")
-    plt.ylabel("Average Price")
+    plt.title("Average Price by District", fontsize=14)
+    plt.ylabel("Average Price", fontsize=12)
+    plt.xticks(rotation=45, ha="right", fontsize=10)  # rotate district names
+    plt.tight_layout()  # prevent labels from being cut off
     plt.show()
 
 
