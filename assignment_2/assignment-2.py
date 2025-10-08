@@ -28,7 +28,7 @@ def plot_decision_boundary(model, X, y, title):
     xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300), np.linspace(y_min, y_max, 300))
     # predicting the class for each point in the grid based on the given model
     Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-    # we flattened the array to make predictions, we need to reshape it back to the grid shape
+    # I flattened the array to make predictions, we need to reshape it back to the grid shape
     Z = Z.reshape(xx.shape)
     # this contour highlights the decision boundary, colors the regions for each class
     plt.contourf(xx, yy, Z, cmap='bwr', alpha=0.3)
@@ -64,7 +64,7 @@ def train_and_evaluate(X_train, X_test, y_train, y_test):
         print(f"{name}:")
         print(f"  → Training error: {1 - train_acc:.3f}")
         print(f"  → Train accuracy:  {train_acc:.3f}")
-        print(f"  → Test error:     {1 - test_acc:.3f}\n")
+        print(f"  → Test error:     {1 - test_acc:.3f}")
         print(f"  → Test accuracy:  {test_acc:.3f}\n")
 
         # plotting the decision boundary for each model using the function defined above
